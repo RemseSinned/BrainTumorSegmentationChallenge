@@ -3,7 +3,8 @@ from pathlib import Path
 import json
 import torch
 from monai.transforms import (
-    Compose, RandFlipd, RandRotate90d, RandScaleIntensityd, ToTensord
+    Compose, RandFlipd, RandRotate90d, RandScaleIntensityd, ToTensord, RandAffined, RandShiftIntensityd,
+    RandGaussianNoised
 )
 
 
@@ -23,10 +24,13 @@ class BrainTumorDataset(Dataset):
         # --- Define transforms ---
         if self.augment:
             self.transforms = Compose([
-                RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
-                RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=1),
+                RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=[0, 1, 2]),
                 RandRotate90d(keys=["image", "label"], prob=0.5, max_k=3),
+                RandAffined(keys=["image", "label"], prob=0.5, rotate_range=(0.1, 0.1, 0.1),
+                            scale_range=(0.1, 0.1, 0.1)),
                 RandScaleIntensityd(keys=["image"], factors=0.1, prob=0.5),
+                RandShiftIntensityd(keys=["image"], offsets=0.1, prob=0.5),
+                RandGaussianNoised(keys=["image"], prob=0.2),
                 ToTensord(keys=["image", "label"]),
             ])
         else:
