@@ -16,6 +16,10 @@ import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 from configs.utils import load_config
+from monai.transforms import (
+    Compose, EnsureChannelFirstd, Spacingd,
+    ResizeWithPadOrCropd, NormalizeIntensityd, LoadImaged
+)
 
 
 cfg = load_config("../configs/paths.yaml")
@@ -35,33 +39,42 @@ def zscore_normalize(volume):
 
 
 def process_case(image_path, label_path, save_path):
-    """Load, normalize and save as .pt tensor."""
-    img = nib.load(image_path)
-    img_np = img.get_fdata().astype(dtype=np.float32)
+    data_dict = {"image": str(image_path), "label": str(label_path)}
 
-    if img_np.ndim == 4:
-        img_np = np.moveaxis(img_np, -1, 0)
-    else:
-        img_np = img_np[None, ...]
+    preprocess = Compose([
+        LoadImaged(keys=["image", "label"]),
+        EnsureChannelFirstd(keys=["image", "label"]),
+        Spacingd(keys=["image", "label"], pixdim=(1.0, 1.0, 1.0), mode=("bilinear", "nearest")),
+        ResizeWithPadOrCropd(keys=["image", "label"], spatial_size=(128, 128, 128)),
+        NormalizeIntensityd(keys=["image"], nonzero=True, channel_wise=True),
+    ])
 
-    img_np = np.stack([zscore_normalize(ch) for ch in img_np])
+    try:
+        processed = preprocess(data_dict)
+    except Exception as e:
+        print(f"Failed on {image_path.name}: {e}")
+        return  # Skip this case
 
-    img_t = torch.from_numpy(img_np).float()
-
-    if label_path is not None and label_path.exists():
-        label_np = nib.load(label_path).get_fdata().astype(dtype=np.int16)
-        label_t = torch.from_numpy(label_np).long()
-    else:
-        label_t = None
-
-    torch.save({"image": img_t, "label": label_t}, save_path)
+    torch.save(
+        {
+            "image": processed["image"].float(),
+            "label": processed["label"].long(),
+        },
+        save_path
+    )
 
 
 def process_split(splits, img_list, label_list, split_name):
-    for img_p, lbl_p in zip(img_list, label_list):
+    for img_p, label_p in zip(img_list, label_list):
         save_path = PRE_DIR / split_name / f"{img_p.stem}.pt"
         print(f"[{split_name.upper()}] Processing {img_p.name}")
-        process_case(img_p, lbl_p, save_path)
+
+        if not img_p.exists():
+            print(f"Missing image file: {img_p}")
+        if not label_p.exists():
+            print(f"Missing label file: {label_p}")
+
+        process_case(img_p, label_p, save_path)
         splits[split_name].append(str(save_path.resolve()))
     return splits
 
