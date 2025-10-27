@@ -1,0 +1,22 @@
+data:
+  preprocessed_dir: "../data/preprocessed"
+  num_workers: 4
+  batch_size: 2
+
+model:
+  spatial_dims: 3
+  in_channels: 4
+  out_channels: 3
+  channels: [16, 32, 64, 128, 256]
+  strides: [2, 2, 2, 2]
+
+training:
+  epochs: 100
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  device: "cuda"
+  checkpoint_dir: "models/checkpoints"
+  log_dir: "runs/brain_tumor"
+
+metrics:
+  num_classes: 3

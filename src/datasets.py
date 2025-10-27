@@ -13,7 +13,7 @@ class BrainTumorDataset(Dataset):
     """
 
     def __init__(self, split="train", augment=False):
-        pre_dir = Path("data/preprocessed")
+        pre_dir = Path("../data/preprocessed")
         with open(pre_dir / "splits.json") as f:
             self.splits = json.load(f)
 
@@ -38,14 +38,13 @@ class BrainTumorDataset(Dataset):
         return len(self.files)
 
     def __getitem__(self, idx):
-        # Load preprocessed .pt file (contains image + label tensors)
         sample_path = Path(self.files[idx]).with_suffix(".pt")
-        data = torch.load(sample_path)
+        data = torch.load(sample_path, weights_only=False)
+
         sample = {
             "image": data["image"],
             "label": data["label"],
         }
 
-        # Apply transforms (if any)
         sample = self.transforms(sample)
         return sample["image"], sample["label"]
