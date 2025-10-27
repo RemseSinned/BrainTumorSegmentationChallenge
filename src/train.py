@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 from monai.networks.nets import UNet
-from monai.losses import DiceLoss
+from monai.losses import DiceLoss, DiceCELoss
 from monai.metrics import DiceMetric
 from monai.transforms import AsDiscrete
 from tqdm import tqdm
@@ -139,8 +139,22 @@ def train():
 
     # --- Model, loss, optimizer ---
     model = UNet(**cfg["model"]).to(device)
-    loss_fn = DiceLoss(include_background=False, to_onehot_y=True, sigmoid=False)
+    loss_fn = DiceCELoss(
+        include_background=False,
+        softmax=True,
+        to_onehot_y=True,
+        lambda_dice=0.7,
+        lambda_ce=0.3
+    )
     optimizer = optim.AdamW(model.parameters(), lr=cfg["training"]["learning_rate"], weight_decay=cfg["training"]["weight_decay"])
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="max",
+        factor=0.5,
+        patience=10,
+        min_lr=1e-6
+    )
 
     # --- Loop ---
     best_val_dice = 0.0
@@ -158,6 +172,7 @@ def train():
             writer.add_scalar(f"Dice/{k}", v, epoch)
 
         mean_dice = sum(dice_scores.values()) / len(dice_scores)
+        scheduler.step(mean_dice)
         print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Mean Dice: {mean_dice:.4f}")
         print(f"Dice - WT: {dice_scores['WT']:.4f}, TC: {dice_scores['TC']:.4f}, ET: {dice_scores['ET']:.4f}")
 
