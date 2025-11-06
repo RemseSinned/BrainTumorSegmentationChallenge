@@ -17,7 +17,7 @@ def print_train_setup():
     print("Device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
 
 
-def load_config(path="../configs/training.yaml"):
+def load_config(path="../configs/training.yml"):
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
@@ -189,3 +189,7 @@ def train():
             print(f"Saved new best model: {ckpt_path}")
 
     writer.close()
+
+
+if __name__ == "__main__":
+    train()

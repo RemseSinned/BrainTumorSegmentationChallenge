@@ -22,7 +22,7 @@ from monai.transforms import (
 )
 
 
-cfg = load_config("../configs/paths.yaml")
+cfg = load_config("../configs/paths.yml")
 RAW_DIR = Path(("../" + cfg["raw_dir"]))
 PRE_DIR = Path(("../" + cfg["preprocessed_dir"]))
 PRE_DIR.mkdir(parents=True, exist_ok=True)
@@ -108,3 +108,7 @@ def prepare_data(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15, seed=42):
 
     print(f"Train: {len(splits['train'])} | Val: {len(splits['val'])} | Test: {len(splits['test'])}")
     print(f"Saved splits.json to: {PRE_DIR / 'splits.json'}")
+
+
+if __name__ == "__main__":
+    prepare_data()

@@ -4,7 +4,7 @@ from configs.utils import load_config
 from src.prepare_dataset import prepare_data
 from src.train import train
 
-cfg = load_config("../configs/paths.yaml")
+cfg = load_config("../configs/paths.yml")
 RAW_DIR = Path(("../" + cfg["raw_dir"]))
 PRE_DIR = Path(("../" + cfg["preprocessed_dir"]))
 
