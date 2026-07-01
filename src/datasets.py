@@ -21,7 +21,6 @@ class BrainTumorDataset(Dataset):
         self.files = self.splits[split]
         self.augment = augment
 
-        # --- Define transforms ---
         if self.augment:
             self.transforms = Compose([
                 RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=[0, 1, 2]),
