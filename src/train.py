@@ -26,8 +26,7 @@ def preprocess_labels(labels):
     """Ensure labels are in the correct range and shape"""
     labels = labels.unsqueeze(1) if labels.ndim == 4 else labels
     labels = labels.clone()
-    labels[labels == 4] = 2  # map ET to 2 (BraTS convention)
-    labels[labels > 2] = 2   # safety: ensure within [0, 2]
+    labels[labels == 4] = 3
     return labels
 
 

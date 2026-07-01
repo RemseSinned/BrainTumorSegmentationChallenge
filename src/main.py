@@ -10,9 +10,10 @@ PRE_DIR = Path(("../" + cfg["preprocessed_dir"]))
 
 
 def main():
-    # prepare_data()
+    prepare_data()
     train()
 
 
 if __name__ == "__main__":
     main()
+
