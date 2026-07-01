@@ -83,7 +83,6 @@ def validate_one_epoch(model, val_loader, loss_fn, device):
             for k in all_dice:
                 all_dice[k] += dice_scores[k]
 
-    # average dice and loss
     num_batches = len(val_loader)
     avg_dice = {k: v / num_batches for k, v in all_dice.items()}
     avg_loss = val_loss / num_batches
@@ -120,7 +119,6 @@ def train():
     os.makedirs(cfg["training"]["checkpoint_dir"], exist_ok=True)
     writer = SummaryWriter(cfg["training"]["log_dir"])
 
-    # --- Data ---
     train_ds = BrainTumorDataset(split="train", augment=True)
     val_ds = BrainTumorDataset(split="val", augment=False)
 
@@ -136,8 +134,7 @@ def train():
         shuffle=False,
         num_workers=cfg["data"]["num_workers"],
     )
-
-    # --- Model, loss, optimizer ---
+    
     model = UNet(**cfg["model"]).to(device)
     loss_fn = DiceCELoss(
         include_background=False,
@@ -156,7 +153,6 @@ def train():
         min_lr=1e-6
     )
 
-    # --- Loop ---
     best_val_dice = 0.0
     epochs = cfg["training"]["epochs"]
 
@@ -165,7 +161,6 @@ def train():
         train_loss = train_one_epoch(model, train_loader, optimizer, loss_fn, device)
         val_loss, dice_scores = validate_one_epoch(model, val_loader, loss_fn, device)
 
-        # Logging
         writer.add_scalar("Loss/train", train_loss, epoch)
         writer.add_scalar("Loss/val", val_loss, epoch)
         for k, v in dice_scores.items():
@@ -176,7 +171,6 @@ def train():
         print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Mean Dice: {mean_dice:.4f}")
         print(f"Dice - WT: {dice_scores['WT']:.4f}, TC: {dice_scores['TC']:.4f}, ET: {dice_scores['ET']:.4f}")
 
-        # Save best checkpoint
         if mean_dice > best_val_dice:
             best_val_dice = mean_dice
             ckpt_path = os.path.join(cfg["training"]["checkpoint_dir"], f"best_model_epoch{epoch + 1}.pth")
